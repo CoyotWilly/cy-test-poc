@@ -1,0 +1,10 @@
+node_modules
+coverage
+dist
+reports
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+.cypress-cache
+cypress/screenshots
+cypress/videos
