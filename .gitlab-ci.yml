@@ -1,0 +1,70 @@
+# GitLab CI/CD for Cypress project: Lint first, then run tests
+# Uses Cypress-maintained Docker image with Chrome/Firefox/Edge for headless runs
+# Docs: https://docs.cypress.io/guides/continuous-integration/gitlab-ci
+
+stages:
+  - lint
+  - test
+
+# Use a Cypress image that includes Node and browsers
+# Pin a reasonably recent image; adjust as needed
+image: cypress/browsers:node20.10.0-chrome123-ff125-edge
+
+# Cache npm and Cypress binary caches to speed up jobs
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - node_modules/
+    - ~/.cache/Cypress
+  policy: pull-push
+
+# Default before_script to install dependencies once per job
+# (npm ci is deterministic and faster for CI)
+before_script:
+  - node -v
+  - npm -v
+  - npm ci --no-audit --no-fund
+
+# Lint stage: run ESLint (and optionally Prettier check)
+lint:
+  stage: lint
+  script:
+    - npm run lint
+    # Uncomment to enforce formatting in CI
+    # - npm run format:check
+  artifacts:
+    when: always
+    reports:
+      # If you later add an ESLint formatter that outputs JSON, you can expose it here
+      # eslint_report: eslint-report.json
+    expire_in: 1 week
+  only:
+    - branches
+    - merge_requests
+
+# Test stage: run Cypress headlessly after lint passes
+cypress:e2e:
+  stage: test
+  needs: ["lint"]
+  variables:
+    # Avoid Chrome sandbox issues in some Docker runners
+    CYPRESS_DOWNLOAD_MIRROR: https://download.cypress.io
+    # You can set baseUrl here or in cypress.config.ts if your app needs to be served
+    # CYPRESS_baseUrl: "http://localhost:3000"
+  script:
+    # If your app needs to run locally, start it in background here and wait
+    # - npm run start &
+    # - npx wait-on http://localhost:3000
+
+    # Run Cypress tests headlessly (Chrome by default in this image)
+    - npx cypress run --browser chrome
+  artifacts:
+    when: always
+    paths:
+      - cypress/screenshots/**
+      - cypress/videos/**
+      - cypress/results/**
+    expire_in: 1 week
+  only:
+    - branches
+    - merge_requests
