@@ -5,22 +5,29 @@ import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 import cypress from "eslint-plugin-cypress";
 import cypressCleanup from "./eslint-plugin-cypress-cleanup.mjs";
+import pageRules from "./eslint-plugin-page-rules.mjs";
 
 /** @type {import('eslint').Linter.FlatConfig[]} */
 export default [
   // Global ignores
   {
     ignores: [
+      // Migrated from legacy .eslintignore
       "node_modules",
-      "dist",
       "coverage",
+      "dist",
       "reports",
-      "**/.cache",
-      "**/.history",
+      ".tmp",
+      ".tmp/**",
+      ".cypress-cache",
       "cypress/screenshots",
       "cypress/videos",
-      // Ignore local plugin file from linting to avoid base-rule conflicts
-      "eslint-plugin-cypress-cleanup.mjs"
+      // Project meta/cache
+      "**/.cache",
+      "**/.history",
+      // Ignore local plugin files from linting to avoid base-rule conflicts
+      "eslint-plugin-cypress-cleanup.mjs",
+      "eslint-plugin-page-rules.mjs"
     ]
   },
 
@@ -129,7 +136,7 @@ export default [
   // Cypress-specific rules and globals (keep global strictness; only add Cypress plugin rules)
   {
     files: ["cypress/**/*.{js,ts}"],
-    plugins: { cypress, "cypress-cleanup": cypressCleanup },
+    plugins: { cypress, "cypress-cleanup": cypressCleanup, "page-rules": pageRules },
     languageOptions: {
       globals: {
         // Mocha globals commonly used in Cypress tests
@@ -149,6 +156,8 @@ export default [
     rules: {
       // Custom: ensure cleanup when using before()
       "cypress-cleanup/require-after-with-before": "error",
+      // Custom: enforce singleton INSTANCE for Page classes with zero-arg constructor
+      "page-rules/enforce-page-singleton": "error",
       // Keep Cypress best-practice rules, do not relax base strictness
       "cypress/no-assigning-return-values": "error",
       "cypress/no-unnecessary-waiting": "warn",
