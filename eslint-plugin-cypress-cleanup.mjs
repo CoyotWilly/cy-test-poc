@@ -3,15 +3,21 @@
 // Ensures that when a Cypress/Mocha `before(() => { ... })` hook is used in a test file,
 // there is also an `after(() => { ... })` hook for proper cleanup.
 //
-// Standard ESLint suppression comments work to disable this rule where needed, e.g.:
+// Rule: enforce-page-singleton
+// For non-abstract classes whose name ends with "Page" and which have a zero-argument (or missing) constructor,
+// require a field exactly: `public static readonly INSTANCE = new ClassName();`.
+//
+// Standard ESLint suppression comments work to disable these rules where needed, e.g.:
 //   /* eslint-disable cypress-cleanup/require-after-with-before */
-//   // eslint-disable-next-line cypress-cleanup/require-after-with-before
+//   /* eslint-disable cypress-cleanup/enforce-page-singleton */
+//   // eslint-next-line cypress-cleanup/require-after-with-before
+//   // eslint-next-line cypress-cleanup/enforce-page-singleton
 //
 /** @type {import("eslint").ESLint.Plugin} */
 const plugin = {
   meta: {
     name: "cypress-cleanup",
-    version: "1.0.0"
+    version: "1.1.0"
   },
   rules: {
     "require-after-with-before": {
@@ -70,7 +76,8 @@ const plugin = {
           }
         };
       }
-    }
+    },
+
   }
 };
 
