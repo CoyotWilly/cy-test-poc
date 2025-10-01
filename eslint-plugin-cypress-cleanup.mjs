@@ -78,6 +78,56 @@ const plugin = {
       }
     },
 
+    // New rule: require clear() immediately before type() in Cypress chains
+    "require-clear-before-type": {
+      meta: {
+        type: "problem",
+        docs: {
+          description:
+            "Require that Cypress .type(...) is immediately preceded by .clear() in the same chain (e.g., clear().type('text')).",
+          recommended: false
+        },
+        schema: [],
+        messages: {
+          mustClearBeforeType:
+            "Use clear() immediately before type(...). Example: cy.get(...).clear().type('text')."
+        }
+      },
+      create(context) {
+        function isMemberCallWithName(node, name) {
+          return (
+            node &&
+            node.type === "CallExpression" &&
+            node.callee &&
+            node.callee.type === "MemberExpression" &&
+            !node.callee.computed &&
+            node.callee.property &&
+            node.callee.property.type === "Identifier" &&
+            node.callee.property.name === name
+          );
+        }
+
+        return {
+          CallExpression(node) {
+            // Only consider member calls `.type(...)`
+            if (!isMemberCallWithName(node, "type")) return;
+
+            const objectExpr = node.callee.object;
+            // Must be a call like `something.clear()` directly before
+            if (isMemberCallWithName(objectExpr, "clear")) {
+              return; // valid
+            }
+
+            // Otherwise, report
+            context.report({
+              node,
+              messageId: "mustClearBeforeType"
+            });
+          }
+        };
+      }
+    }
+
   }
 };
 
